@@ -4,15 +4,10 @@ import (
 	"context"
 	"time"
 
+	"blipw/internal/models"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-type Tweet struct {
-	Id        int       `json:"id"`
-	UserId    int       `json:"user_id"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-}
 
 type TweetRepository struct {
 	pool *pgxpool.Pool
@@ -24,7 +19,7 @@ func NewTweetRepository(pool *pgxpool.Pool) *TweetRepository {
 	}
 }
 
-func (r *TweetRepository) GetAll(ctx context.Context) ([]Tweet, error) {
+func (r *TweetRepository) GetAll(ctx context.Context) ([]models.Tweet, error) {
 	query := `SELECT id, user_id,content,created_at FROM tweets`
 
 	rows, err := r.pool.Query(ctx, query)
@@ -32,9 +27,9 @@ func (r *TweetRepository) GetAll(ctx context.Context) ([]Tweet, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	tweets := make([]Tweet, 0)
+	tweets := make([]models.Tweet, 0)
 	for rows.Next() {
-		var t Tweet
+		var t models.Tweet
 
 		err := rows.Scan(&t.Id, &t.UserId, &t.Content, &t.CreatedAt)
 		if err != nil {
@@ -49,4 +44,23 @@ func (r *TweetRepository) GetAll(ctx context.Context) ([]Tweet, error) {
 	}
 
 	return tweets, nil
+}
+
+func (r *TweetRepository) Create(ctx context.Context, userId int64, content string) (models.Tweet, error) {
+	var newId int64
+	var newCreatedAt time.Time
+	query := "INSERT INTO tweets (user_id, content) VALUES ($1, $2) RETURNING id, created_at"
+	row := r.pool.QueryRow(ctx, query, userId, content)
+	err := row.Scan(&newId, &newCreatedAt)
+	if err != nil {
+		return models.Tweet{}, err
+	}
+
+	var t models.Tweet
+	t.Id = newId
+	t.CreatedAt = newCreatedAt
+	t.UserId = int(userId)
+	t.Content = content
+
+	return t, nil
 }
