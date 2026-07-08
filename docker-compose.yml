@@ -1,0 +1,25 @@
+
+services:
+  blipw_db:
+    image: postgres:15-alpine
+    
+    container_name: blipw_postgres
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: blipw_admin
+      POSTGRES_PASSWORD: adminpas_chebureki
+      POSTGRES_DB: blipw_main
+
+    # Проброс портов. 
+    # Левая часть (127.0.0.1:5432) — база доступна локально на твоем Макбуке.
+    # Правая часть (:5432) — стандартный порт Постгреса внутри самого контейнера.
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - blipw_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  blipw_postgres_data:
