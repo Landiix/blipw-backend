@@ -14,12 +14,10 @@ CREATE TABLE IF NOT EXISTS tweets (
 );
 
 
--- Добавляем пользователей
 INSERT INTO users (username, password) VALUES 
 ('pavel', 'hashed_cheburek123'),
 ('vanya', 'secret_password');
 
--- Добавляем твиты (допустим, у Павла id = 1, а у Вани id = 2)
 INSERT INTO tweets (user_id, content) VALUES 
 (1, 'Мой первый твит в Blipw! Всем привет.'),
 (1, 'Разрабатываю бэкенд на Go, язык просто пушка!'),
