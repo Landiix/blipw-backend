@@ -8,10 +8,10 @@ import (
 )
 
 type Tweet struct {
-	Id        int
-	UserId    int
-	Content   string
-	CreatedAt time.Time
+	Id        int       `json:"id"`
+	UserId    int       `json:"user_id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type TweetRepository struct {
