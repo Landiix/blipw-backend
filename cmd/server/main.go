@@ -34,6 +34,8 @@ func main() {
 	log.Println("  GET  /api/tweets -> GetAll")
 	log.Println("  POST /api/tweets -> Create")
 
-	log.Println("Starting server on :8080...")
-	http.ListenAndServe(":8080", mux)
+	log.Println("Starting server on :8081...")
+	if err := http.ListenAndServe(":8081", mux); err != nil {
+		log.Fatalf("Ошибка при запуске сервера: %v", err)
+	} //http://localhost:8081/api/tweets
 }
