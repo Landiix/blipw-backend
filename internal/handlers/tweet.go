@@ -32,7 +32,7 @@ func (h *TweetHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	tweets, err := h.repo.GetAll(r.Context())
 	if err != nil {
 		log.Println("Unable to get data: ", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error", 500)
 		return
 	}
 	json.NewEncoder(w).Encode(tweets)
@@ -45,27 +45,27 @@ func (h *TweetHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON format", 400)
 		return
 	}
 
 	if len(req.Content) == 0 {
-		http.Error(w, "Length of Content is 0!", http.StatusBadRequest)
+		http.Error(w, "Length of Content is 0!", 400)
 		return
 	}
 	if utf8.RuneCountInString(req.Content) > 280 {
-		http.Error(w, "Length of Content > 280 symbols!", http.StatusBadRequest)
+		http.Error(w, "Length of Content > 280 symbols!", 400)
 		return
 	}
 
 	tweet, err := h.repo.Create(r.Context(), req.UserID, req.Content)
 	if err != nil {
 		log.Println("Unable to create tweet: ", err)
-		http.Error(w, "Internal server error!", http.StatusInternalServerError)
+		http.Error(w, "Internal server error!", 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(tweet)
 }

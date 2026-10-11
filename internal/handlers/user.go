@@ -35,7 +35,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Register error:", err)
 
-		if err == service.ErrUserAlreadyExists {
+		if errors.Is(err, service.ErrUserAlreadyExists) {
 			http.Error(w, "Username already exists", 409)
 			return
 		}
@@ -57,9 +57,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.authService.Login(r.Context(), req.Username, req.Password)
+	if err != nil {
 
-	if errors.Is(err, service.ErrInvalidCredentials) {
-		http.Error(w, "Invalid username or password", 401)
+		if errors.Is(err, service.ErrInvalidInput) {
+			http.Error(w, "Invalid input", 400)
+			return
+		}
+
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			http.Error(w, "Invalid username or password", 401)
+			return
+		}
+
+		http.Error(w, "Internal server error", 500)
 		return
 	}
 
