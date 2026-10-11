@@ -12,6 +12,10 @@ import (
 
 var ErrUserAlreadyExists = errors.New("user already exists")
 
+var ErrInvalidInput = errors.New("invalid input")
+
+var ErrInvalidCredentials = errors.New("invalid username or password")
+
 type AuthService struct {
 	userRepo *repository.UserRepository
 }
@@ -42,4 +46,21 @@ func (s *AuthService) Register(ctx context.Context, username string, password st
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func (s *AuthService) Login(ctx context.Context, username, password string) (models.User, error) {
+	if len(username) == 0 || len(password) == 0 {
+		return models.User{}, ErrInvalidInput
+	}
+	if user, err := s.userRepo.GetByUsername(ctx, username); err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return models.User{}, ErrInvalidCredentials
+		}
+		return models.User{}, err
+	} else {
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+			return models.User{}, ErrInvalidCredentials
+		}
+		return user, nil
+	}
 }

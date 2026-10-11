@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -26,7 +27,7 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON format", 400)
 		return
 	}
 
@@ -35,15 +36,34 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		log.Println("Register error:", err)
 
 		if err == service.ErrUserAlreadyExists {
-			http.Error(w, "Username already exists", http.StatusConflict) // 409
+			http.Error(w, "Username already exists", 409)
 			return
 		}
 
-		http.Error(w, "Internal server error", http.StatusInternalServerError) // 500
+		http.Error(w, "Internal server error", 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated) // 201
+	w.WriteHeader(201)
+	json.NewEncoder(w).Encode(user)
+}
+
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON format", 400)
+		return
+	}
+
+	user, err := h.authService.Login(r.Context(), req.Username, req.Password)
+
+	if errors.Is(err, service.ErrInvalidCredentials) {
+		http.Error(w, "Invalid username or password", 401)
+		return
+	}
+
+	w.Header().Set("Content type", "application/json")
+	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(user)
 }

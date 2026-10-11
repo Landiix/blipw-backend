@@ -36,11 +36,13 @@ func main() {
 	mux.HandleFunc("POST /api/tweets", tweetHandler.Create)
 
 	mux.HandleFunc("POST /api/auth/register", userHandler.Register)
+	mux.HandleFunc("POST /api/auth/login", userHandler.Login)
 
 	log.Println("Routes registered:")
 	log.Println("  GET  /api/tweets -> GetAll")
 	log.Println("  POST /api/tweets -> Create")
 	log.Println("  POST /api/auth/register -> Register")
+	log.Println("  POAT /api/auth/login -> Login")
 
 	log.Println("Starting server on :8081...")
 	if err := http.ListenAndServe(":8081", mux); err != nil {

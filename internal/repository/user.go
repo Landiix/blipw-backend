@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var ErrUserNotFound = errors.New("user not found")
+
 type UserRepository struct {
 	pool *pgxpool.Pool
 }
@@ -28,7 +30,7 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (mo
 	err := row.Scan(&u.Id, &u.Username, &u.Password, &u.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return models.User{}, errors.New("user not found")
+			return models.User{}, ErrUserNotFound
 		}
 		return models.User{}, err
 	}
