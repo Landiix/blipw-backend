@@ -1,9 +1,12 @@
 .env
 /venv
 /node_modules
+web/node_modules
+web/dist
 .DS_Store
 bin/
 main
 server
 config.yaml
 *.log
+
