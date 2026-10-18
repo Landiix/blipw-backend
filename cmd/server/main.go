@@ -1,6 +1,9 @@
 package main
 
 import (
+	"time"
+
+	"blipw/internal/auth"
 	"blipw/internal/config"
 	"blipw/internal/database"
 	"blipw/internal/handlers"
@@ -25,12 +28,16 @@ func main() {
 	repo := repository.NewTweetRepository(pool)
 	user := repository.NewUserRepository(pool)
 
-	auth := service.NewAuthService(user)
+	tokens := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
+	authService := service.NewAuthService(user, tokens)
 
 	tweetHandler := handlers.NewTweetHandler(repo)
-	userHandler := handlers.NewAuthHandler(auth)
+	userHandler := handlers.NewAuthHandler(authService)
 
 	mux := http.NewServeMux()
+
+	protected := auth.RequireAuth(tokens)
+	mux.Handle("GET /api/auth/me", protected(http.HandlerFunc(userHandler.Me)))
 
 	mux.HandleFunc("GET /api/tweets", tweetHandler.GetAll)
 	mux.HandleFunc("POST /api/tweets", tweetHandler.Create)
@@ -43,6 +50,7 @@ func main() {
 	log.Println("  POST /api/tweets -> Create")
 	log.Println("  POST /api/auth/register -> Register")
 	log.Println("  POST /api/auth/login -> Login")
+	log.Println("  GET  /api/auth/me -> Login")
 
 	log.Println("Starting server on :8081...")
 	if err := http.ListenAndServe(":8081", mux); err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"blipw/internal/auth"
 	"blipw/internal/models"
 	"blipw/internal/repository"
 
@@ -18,11 +19,13 @@ var ErrInvalidCredentials = errors.New("invalid username or password")
 
 type AuthService struct {
 	userRepo *repository.UserRepository
+	tokens   *auth.TokenManager
 }
 
-func NewAuthService(userRepo *repository.UserRepository) *AuthService {
+func NewAuthService(userRepo *repository.UserRepository, m *auth.TokenManager) *AuthService {
 	return &AuthService{
 		userRepo: userRepo,
+		tokens:   m,
 	}
 }
 
@@ -48,19 +51,23 @@ func (s *AuthService) Register(ctx context.Context, username string, password st
 	return user, nil
 }
 
-func (s *AuthService) Login(ctx context.Context, username, password string) (models.User, error) {
+func (s *AuthService) Login(ctx context.Context, username, password string) (models.User, string, error) {
 	if len(username) == 0 || len(password) == 0 {
-		return models.User{}, ErrInvalidInput
+		return models.User{}, "", ErrInvalidInput
 	}
 	if user, err := s.userRepo.GetByUsername(ctx, username); err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
-			return models.User{}, ErrInvalidCredentials
+			return models.User{}, "", ErrInvalidCredentials
 		}
-		return models.User{}, err
+		return models.User{}, "", err
 	} else {
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-			return models.User{}, ErrInvalidCredentials
+			return models.User{}, "", ErrInvalidCredentials
 		}
-		return user, nil
+		token, err := s.tokens.Issue(user.Id)
+		if err != nil {
+			return models.User{}, "", err
+		}
+		return user, token, nil
 	}
 }
