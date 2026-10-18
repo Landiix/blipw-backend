@@ -1,6 +1,9 @@
 package main
 
 import (
+	"time"
+
+	"blipw/internal/auth"
 	"blipw/internal/config"
 	"blipw/internal/database"
 	"blipw/internal/handlers"
@@ -25,12 +28,16 @@ func main() {
 	repo := repository.NewTweetRepository(pool)
 	user := repository.NewUserRepository(pool)
 
-	auth := service.NewAuthService(user)
+	tokens := auth.NewTokenManager(cfg.JWTSecret, 24*time.Hour)
+	authService := service.NewAuthService(user, tokens)
 
 	tweetHandler := handlers.NewTweetHandler(repo)
-	userHandler := handlers.NewAuthHandler(auth)
+	userHandler := handlers.NewAuthHandler(authService)
 
 	mux := http.NewServeMux()
+
+	protected := auth.RequireAuth(tokens)
+	mux.Handle("GET /api/auth/me", protected(http.HandlerFunc(userHandler.Me)))
 
 	mux.HandleFunc("GET /api/tweets", tweetHandler.GetAll)
 	mux.HandleFunc("POST /api/tweets", tweetHandler.Create)

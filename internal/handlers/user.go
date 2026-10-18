@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"blipw/internal/auth"
+	"blipw/internal/models"
 	"blipw/internal/service"
 )
 
@@ -16,6 +18,11 @@ type AuthHandler struct {
 type RegisterRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string      `json:"token"`
+	User  models.User `json:"user"`
 }
 
 func NewAuthHandler(authService *service.AuthService) *AuthHandler {
@@ -56,7 +63,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authService.Login(r.Context(), req.Username, req.Password)
+	user, token, err := h.authService.Login(r.Context(), req.Username, req.Password)
 	if err != nil {
 
 		if errors.Is(err, service.ErrInvalidInput) {
@@ -75,5 +82,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(LoginResponse{Token: token, User: user})
+}
+
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int64{"user_id": userID})
 }
