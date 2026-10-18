@@ -50,6 +50,7 @@ func main() {
 	log.Println("  POST /api/tweets -> Create")
 	log.Println("  POST /api/auth/register -> Register")
 	log.Println("  POST /api/auth/login -> Login")
+	log.Println("  GET  /api/auth/me -> Login")
 
 	log.Println("Starting server on :8081...")
 	if err := http.ListenAndServe(":8081", mux); err != nil {

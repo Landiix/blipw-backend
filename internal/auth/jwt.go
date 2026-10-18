@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -21,6 +22,9 @@ type Claims struct {
 }
 
 func NewTokenManager(secret string, ttl time.Duration) *TokenManager {
+	if secret == "" {
+		log.Fatal("JWT_SECRET is required")
+	}
 	return &TokenManager{secret: []byte(secret), ttl: ttl}
 }
 
